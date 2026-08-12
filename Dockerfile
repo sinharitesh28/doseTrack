@@ -15,3 +15,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Run the web service on container startup using Gunicorn
 # Cloud Run injects the $PORT environment variable automatically (default 8080)
 CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 run:app
+
+# Cache bust: 1786509106.83383
