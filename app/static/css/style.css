@@ -1,0 +1,28 @@
+
+* { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body { background-color: #f4f7f6; margin: 0; padding: 20px; }
+.container { max-width: 900px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+h1 { color: #2c3e50; text-align: center; }
+fieldset { border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; padding: 15px; }
+legend { font-weight: bold; color: #34495e; background: #fff; padding: 0 10px; }
+.form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: flex-start; }
+input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; flex: 1; min-width: 150px; }
+.btn-small { background: #3498db; color: #fff; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-size: 12px; }
+.btn-small:hover { background: #2980b9; }
+.btn-submit { width: 100%; padding: 12px; background: #27ae60; color: #fff; border: none; font-size: 16px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+.btn-submit:hover { background: #219150; }
+.btn-resend { background: #e67e22; margin-top: 10px; }
+.btn-resend:hover { background: #d35400; }
+.med-box { border: 1px dashed #aaa; padding: 10px; margin-bottom: 10px; border-radius: 5px; background: #fafafa; }
+.hidden { display: none; }
+
+/* Status Cards */
+#linkingSection { margin: 20px 0; border-radius: 5px; text-align: center; }
+.card-pending { padding: 20px; background: #fdf2e9; border: 1px solid #f39c12; }
+.card-success { padding: 20px; background: #e8f8f5; border: 1px solid #27ae60; color: #1e8449; }
+.card-error { padding: 20px; background: #fdedec; border: 1px solid #e74c3c; color: #c0392b; }
+
+/* Autocomplete Dropdown Styles */
+.autocomplete-box { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ccc; border-top: none; border-radius: 0 0 4px 4px; z-index: 1000; max-height: 200px; overflow-y: auto; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.autocomplete-item { padding: 10px; cursor: pointer; font-size: 14px; border-bottom: 1px solid #eee; }
+.autocomplete-item:hover { background-color: #f0f8ff; }
