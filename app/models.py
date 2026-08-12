@@ -56,3 +56,12 @@ class MedicationTiming(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     medication_id = db.Column(db.Integer, db.ForeignKey('patient_medications.id', ondelete='CASCADE'), nullable=False)
     dosage_time = db.Column(db.Time, nullable=False)
+
+class DosageLog(db.Model):
+    __tablename__ = 'dosage_logs'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    timing_id = db.Column(db.Integer, db.ForeignKey('medication_timings.id', ondelete='CASCADE'), nullable=False)
+    scheduled_datetime = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.Enum('Pending', 'Taken', 'Missed'), default='Pending')
+    response_time = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
