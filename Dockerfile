@@ -17,3 +17,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 run:app
 
 # Cache bust: 1786509106.83383
+
+# Bulletproof sync deploy: 1786520269.568679
