@@ -262,7 +262,7 @@ def cron_reminders():
         JOIN patients p ON m.uhid = p.uhid
         WHERE m.start_date <= :d 
           AND m.end_date >= :d
-          AND DATE_FORMAT(t.dosage_time, '%H:%i') = :t
+          AND TIME_FORMAT(t.dosage_time, '%H:%i') = :t
           AND p.telegram_chat_id IS NOT NULL
           AND p.consent_status = 'Accepted'
     """)
