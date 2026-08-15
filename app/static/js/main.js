@@ -156,7 +156,7 @@ function startPolling(uhid) {
                 document.getElementById('clinicalForm').classList.add('hidden');
             }
         } catch (error) { console.error("Polling error:", error); }
-    }, 3000); 
+    }, 1500); 
 }
 
 async function resendConsent() {

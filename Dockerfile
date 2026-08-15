@@ -21,3 +21,5 @@ CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 run:app
 # Bulletproof sync deploy: 1786520269.568679
 
 # SSL CA Cert fix deploy: 1786528350.9942784
+
+# Polling spam fix deploy: 1786777823.1136277
