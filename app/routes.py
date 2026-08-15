@@ -284,4 +284,4 @@ def cron_reminders():
             )
 
     db.session.commit()
-    return jsonify({"status": "success", "processed": len(results)}), 200
+    return jsonify({"status": "success", "processed": len(results), "server_time": current_time_str, "db_query_date": current_date_str}), 200
