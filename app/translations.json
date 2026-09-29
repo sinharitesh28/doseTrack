@@ -1,0 +1,186 @@
+{
+    "English": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Assamese": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Bengali": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Bodo": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Dogri": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Gujarati": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Hindi": {
+        "reminder_header": "🔔 *दवा अनुस्मारक (Reminder)*",
+        "time_to_take": "आपकी दवा लेने का समय हो गया है:",
+        "dose": "🩸 खुराक:",
+        "record_prompt": "कृपया नीचे अपनी प्रतिक्रिया दर्ज करें:",
+        "btn_taken": "✅ ले ली",
+        "btn_missed": "❌ छूट गई"
+    },
+    "Kannada": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Kashmiri": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Konkani": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Maithili": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Malayalam": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Manipuri": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Marathi": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Nepali": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Odia": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Punjabi": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Sanskrit": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Santhali": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Sindhi": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Tamil": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Telugu": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    },
+    "Urdu": {
+        "reminder_header": "🔔 *Medication Reminder*",
+        "time_to_take": "Time to take your medication:",
+        "dose": "🩸 Dose:",
+        "record_prompt": "Please record your response below:",
+        "btn_taken": "✅ Taken",
+        "btn_missed": "❌ Missed"
+    }
+}

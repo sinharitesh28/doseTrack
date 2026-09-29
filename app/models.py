@@ -22,6 +22,7 @@ class Patient(db.Model):
     name = db.Column(db.String(100), nullable=False)
     age = db.Column(db.Integer, nullable=False)
     gender = db.Column(db.Enum('M', 'F', 'Other'), nullable=False)
+    preferred_language = db.Column(db.String(50), default='English')
     telegram_chat_id = db.Column(db.String(50), nullable=True)
     consent_status = db.Column(db.Enum('Pending', 'Accepted', 'Denied'), default='Pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

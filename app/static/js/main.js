@@ -180,7 +180,8 @@ document.getElementById('demographicsForm').addEventListener('submit', async fun
         uhid: uhid,
         name: document.getElementById('name').value,
         age: parseInt(document.getElementById('age').value),
-        gender: document.getElementById('gender').value
+        gender: document.getElementById('gender').value,
+        preferred_language: document.getElementById('preferred_language').value
     };
 
     try {
