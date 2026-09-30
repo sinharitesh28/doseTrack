@@ -137,3 +137,36 @@ def resend_consent(uhid):
 
     db.session.commit()
     return jsonify({"status": "success", "processed": len(results), "server_time": current_time_str, "db_query_date": current_date_str}), 200
+
+
+@main_bp.route('/telegram_webhook', methods=['POST'])
+def telegram_webhook():
+    try:
+        data = request.json
+        if not data or 'message' not in data:
+            return jsonify({"status": "ignored"}), 200
+
+        message = data.get('message', {})
+        text = message.get('text', '')
+        chat_id = message.get('chat', {}).get('id')
+
+        # Handle Patient Consent: /start <uhid>
+        if text.startswith('/start'):
+            parts = text.split(' ')
+            if len(parts) > 1:
+                uhid = parts[1].strip()
+                patient = Patient.query.filter_by(uhid=uhid).first()
+
+                if patient:
+                    patient.telegram_chat_id = str(chat_id)
+                    patient.consent_status = 'Accepted'
+                    db.session.commit()
+
+                    success_msg = f"✅ Registration successful! Welcome to DoseTrack, {patient.name}. You will now receive your localized medication reminders here."
+                    send_tg_message(chat_id, success_msg)
+
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Webhook Error: {e}")
+        return jsonify({"status": "error"}), 500
