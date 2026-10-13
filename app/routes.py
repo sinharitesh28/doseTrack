@@ -105,39 +105,70 @@ def check_consent(uhid):
     res = db.session.execute(text("SELECT consent_status FROM patients WHERE uhid = :u"), {'u': uhid}).fetchone()
     return jsonify({"status": res[0] if res else "Not Found"}), 200 if res else 404
 
+
+
 @main_bp.route('/api/resend_consent/<uhid>', methods=['POST'])
 def resend_consent(uhid):
     patient = Patient.query.get(uhid)
     if patient and patient.telegram_chat_id:
         patient.consent_status = 'Pending'
         db.session.commit()
-        # Load translations
 
-        try:
+        msg_text = f"""Hello {patient.name}, please click the link below and press 'Start' to re-verify your consent:
+https://{TELEGRAM_BOT_URL}?start={patient.uhid}"""
 
-            import json
+        send_tg_message(patient.telegram_chat_id, msg_text)
+        return jsonify({"status": "success"}), 200
+    return jsonify({"error": "Patient not found or no Telegram chat ID"}), 404
 
-            with open('app/translations.json', 'r', encoding='utf-8') as tf:
+@main_bp.route('/api/cron/reminders', methods=['GET', 'POST'])
+def cron_reminders():
+    # Simple security check to prevent random people from triggering it
+    secret = request.args.get('secret')
+    if secret != "dose_cron_secure_123":
+        return jsonify({"error": "Unauthorized"}), 403
 
-                trans_dict = json.load(tf)
+    now_ist = datetime.now(IST)
+    current_time_str = now_ist.strftime('%H:%M')
+    current_date_str = now_ist.strftime('%Y-%m-%d')
+    current_datetime_minute = now_ist.strftime('%Y-%m-%d %H:%M:00')
 
-            t = trans_dict.get(pref_lang, trans_dict['English'])
+    sql = text("""
+        SELECT t.id as timing_id, p.telegram_chat_id, m.drug_name, m.dose
+        FROM medication_timings t
+        JOIN patient_medications m ON t.medication_id = m.id
+        JOIN patients p ON m.uhid = p.uhid
+        WHERE m.start_date <= :d 
+          AND m.end_date >= :d
+          AND LEFT(CAST(t.dosage_time AS CHAR), 5) = :t
+          AND p.telegram_chat_id IS NOT NULL
+          AND p.consent_status = 'Accepted'
+    """)
 
-        except Exception as e:
+    results = db.session.execute(sql, {'d': current_date_str, 't': current_time_str}).fetchall()
 
-            t = {"reminder_header": "🔔 *Medication Reminder*", "time_to_take": "Time to take your medication:", "dose": "🩸 Dose:", "record_prompt": "Please record your response below:", "btn_taken": "✅ Taken", "btn_missed": "❌ Missed"}
+    for timing_id, chat_id, drug_name, dose in results:
+        log = DosageLog.query.filter_by(timing_id=timing_id, scheduled_datetime=current_datetime_minute).first()
+        if not log:
+            new_log = DosageLog(timing_id=timing_id, scheduled_datetime=current_datetime_minute, status='Pending')
+            db.session.add(new_log)
+            db.session.flush()
 
-        
+            kb = {"inline_keyboard": [[{"text": "✅ Taken", "callback_data": f"{new_log.id}:Taken"}, {"text": "❌ Missed", "callback_data": f"{new_log.id}:Missed"}]]}
+            send_tg_message(
+                chat_id, 
+                f"🔔 *Medication Reminder*
 
-        kb = {"inline_keyboard": [[{"text": t["btn_taken"], "callback_data": f"{new_log.id}:Taken"}, {"text": t["btn_missed"], "callback_data": f"{new_log.id}:Missed"}]]}
+Time to take your medication:
+💊 *{drug_name}*
+🩸 Dose: {dose}
 
-        msg_text = f"{t['reminder_header']}\n\n{t['time_to_take']}\n💊 *{drug_name}*\n{t['dose']} {dose}\n\n{t['record_prompt']}"
-
-        send_tg_message(chat_id, msg_text, reply_markup=kb)
+Please record your response below:",
+                reply_markup=kb
+            )
 
     db.session.commit()
     return jsonify({"status": "success", "processed": len(results), "server_time": current_time_str, "db_query_date": current_date_str}), 200
-
 
 @main_bp.route('/telegram_webhook', methods=['POST'])
 def telegram_webhook():
