@@ -114,16 +114,16 @@ def resend_consent(uhid):
         patient.consent_status = 'Pending'
         db.session.commit()
 
-        msg_text = f"""Hello {patient.name}, please click the link below and press 'Start' to re-verify your consent:
-https://{TELEGRAM_BOT_URL}?start={patient.uhid}"""
-
+        msg_text = (
+            f"Hello {patient.name}, please click the link below and press 'Start' to re-verify your consent:\n"
+            f"https://{TELEGRAM_BOT_URL}?start={patient.uhid}"
+        )
         send_tg_message(patient.telegram_chat_id, msg_text)
         return jsonify({"status": "success"}), 200
     return jsonify({"error": "Patient not found or no Telegram chat ID"}), 404
 
-@main_bp.route('/api/cron/reminders', methods=['GET', 'POST'])
+@main_bp.route('/cron_reminders', methods=['GET', 'POST'])
 def cron_reminders():
-    # Simple security check to prevent random people from triggering it
     secret = request.args.get('secret')
     if secret != "dose_cron_secure_123":
         return jsonify({"error": "Unauthorized"}), 403
@@ -155,17 +155,15 @@ def cron_reminders():
             db.session.flush()
 
             kb = {"inline_keyboard": [[{"text": "✅ Taken", "callback_data": f"{new_log.id}:Taken"}, {"text": "❌ Missed", "callback_data": f"{new_log.id}:Missed"}]]}
-            send_tg_message(
-                chat_id, 
-                f"🔔 *Medication Reminder*
 
-Time to take your medication:
-💊 *{drug_name}*
-🩸 Dose: {dose}
-
-Please record your response below:",
-                reply_markup=kb
+            msg = (
+                f"🔔 *Medication Reminder*\n\n"
+                f"Time to take your medication:\n"
+                f"💊 *{drug_name}*\n"
+                f"🩸 Dose: {dose}\n\n"
+                f"Please record your response below:"
             )
+            send_tg_message(chat_id, msg, reply_markup=kb)
 
     db.session.commit()
     return jsonify({"status": "success", "processed": len(results), "server_time": current_time_str, "db_query_date": current_date_str}), 200
