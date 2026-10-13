@@ -179,20 +179,40 @@ def telegram_webhook():
         text = message.get('text', '')
         chat_id = message.get('chat', {}).get('id')
 
-        # Handle Patient Consent: /start <uhid>
+        # Handle Commands
         if text.startswith('/start'):
             parts = text.split(' ')
             if len(parts) > 1:
-                uhid = parts[1].strip()
-                patient = Patient.query.filter_by(uhid=uhid).first()
+                arg = parts[1].strip()
 
+                # FLOW 1: Staff/Admin Login (arg starts with 'auth_')
+                if arg.startswith('auth_'):
+                    auth = AuthToken.query.get(arg)
+                    if auth and auth.status == 'Pending':
+                        auth.telegram_id = str(chat_id)
+
+                        # Check if this telegram_id is a registered Active User
+                        user = User.query.get(str(chat_id))
+                        if user and user.status == 'Active':
+                            auth.status = 'Approved'
+                            send_tg_message(chat_id, "✅ Login successful! You may return to your web browser.")
+                        else:
+                            auth.status = 'Denied'
+                            send_tg_message(chat_id, "❌ Unauthorized. Your Telegram account is not registered as an active staff member.")
+
+                        db.session.commit()
+                        return jsonify({"status": "success"}), 200
+
+                # FLOW 2: Patient Consent Registration (arg is a UHID)
+                patient = Patient.query.filter_by(uhid=arg).first()
                 if patient:
                     patient.telegram_chat_id = str(chat_id)
                     patient.consent_status = 'Accepted'
                     db.session.commit()
 
-                    success_msg = f"✅ Registration successful! Welcome to DoseTrack, {patient.name}. You will now receive your localized medication reminders here."
+                    success_msg = f"✅ Registration successful! Welcome to DoseTrack, {patient.name}. You will now receive your medication reminders here."
                     send_tg_message(chat_id, success_msg)
+                    return jsonify({"status": "success"}), 200
 
         return jsonify({"status": "success"}), 200
     except Exception as e:
