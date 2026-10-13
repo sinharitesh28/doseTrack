@@ -94,7 +94,9 @@ def register_patient():
         if not Patient.query.get(data['uhid']):
             db.session.add(Patient(uhid=data['uhid'], name=data['name'], age=data['age'], gender=data['gender'], preferred_language=data.get('preferred_language', 'English')))
             db.session.commit()
-        return jsonify({"status": "success", "telegram_link": f"https://{TELEGRAM_BOT_URL}?start={data['uhid']}"}), 200
+        import base64
+        safe_uhid = base64.urlsafe_b64encode(data['uhid'].encode('utf-8')).decode('utf-8').rstrip('=')
+        return jsonify({"status": "success", "telegram_link": f"https://{TELEGRAM_BOT_URL}?start={safe_uhid}"}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "error", "message": str(e)}), 400
@@ -133,8 +135,15 @@ def cron_reminders():
     current_date_str = now_ist.strftime('%Y-%m-%d')
     current_datetime_minute = now_ist.strftime('%Y-%m-%d %H:%M:00')
 
+    try:
+        import json
+        with open('app/translations.json', 'r', encoding='utf-8') as tf:
+            trans_dict = json.load(tf)
+    except Exception:
+        trans_dict = {}
+
     sql = text("""
-        SELECT t.id as timing_id, p.telegram_chat_id, m.drug_name, m.dose
+        SELECT t.id as timing_id, p.telegram_chat_id, m.drug_name, m.dose, p.preferred_language
         FROM medication_timings t
         JOIN patient_medications m ON t.medication_id = m.id
         JOIN patients p ON m.uhid = p.uhid
@@ -147,22 +156,32 @@ def cron_reminders():
 
     results = db.session.execute(sql, {'d': current_date_str, 't': current_time_str}).fetchall()
 
-    for timing_id, chat_id, drug_name, dose in results:
+    for timing_id, chat_id, drug_name, dose, pref_lang in results:
         log = DosageLog.query.filter_by(timing_id=timing_id, scheduled_datetime=current_datetime_minute).first()
         if not log:
             new_log = DosageLog(timing_id=timing_id, scheduled_datetime=current_datetime_minute, status='Pending')
             db.session.add(new_log)
             db.session.flush()
 
-            kb = {"inline_keyboard": [[{"text": "✅ Taken", "callback_data": f"{new_log.id}:Taken"}, {"text": "❌ Missed", "callback_data": f"{new_log.id}:Missed"}]]}
+            lang = pref_lang if pref_lang in trans_dict else 'English'
+            t = trans_dict.get(lang, trans_dict.get('English', {}))
 
-            msg = (
-                f"🔔 *Medication Reminder*\n\n"
-                f"Time to take your medication:\n"
-                f"💊 *{drug_name}*\n"
-                f"🩸 Dose: {dose}\n\n"
-                f"Please record your response below:"
-            )
+            btn_taken = t.get("btn_taken", "✅ Taken")
+            btn_missed = t.get("btn_missed", "❌ Missed")
+
+            kb = {"inline_keyboard": [[{"text": btn_taken, "callback_data": f"{new_log.id}:Taken"}, {"text": btn_missed, "callback_data": f"{new_log.id}:Missed"}]]}
+
+            msg_lines = [
+                t.get('reminder_header', '🔔 *Medication Reminder*'),
+                "",
+                t.get('time_to_take', 'Time to take your medication:'),
+                f"💊 *{drug_name}*",
+                f"{t.get('dose', '🩸 Dose:')} {dose}",
+                "",
+                t.get('record_prompt', 'Please record your response below:')
+            ]
+            msg = chr(10).join(msg_lines)
+
             send_tg_message(chat_id, msg, reply_markup=kb)
 
     db.session.commit()
@@ -179,40 +198,50 @@ def telegram_webhook():
         text = message.get('text', '')
         chat_id = message.get('chat', {}).get('id')
 
-        # Handle Commands
         if text.startswith('/start'):
             parts = text.split(' ')
             if len(parts) > 1:
                 arg = parts[1].strip()
 
-                # FLOW 1: Staff/Admin Login (arg starts with 'auth_')
                 if arg.startswith('auth_'):
                     auth = AuthToken.query.get(arg)
                     if auth and auth.status == 'Pending':
                         auth.telegram_id = str(chat_id)
-
-                        # Check if this telegram_id is a registered Active User
                         user = User.query.get(str(chat_id))
                         if user and user.status == 'Active':
                             auth.status = 'Approved'
                             send_tg_message(chat_id, "✅ Login successful! You may return to your web browser.")
                         else:
                             auth.status = 'Denied'
-                            send_tg_message(chat_id, "❌ Unauthorized. Your Telegram account is not registered as an active staff member.")
-
+                            send_tg_message(chat_id, "❌ Unauthorized. Your Telegram account is not registered.")
                         db.session.commit()
                         return jsonify({"status": "success"}), 200
+                else:
+                    import base64
+                    try:
+                        padding = '=' * (4 - len(arg) % 4)
+                        uhid = base64.urlsafe_b64decode(arg + padding).decode('utf-8')
+                    except Exception:
+                        uhid = arg
 
-                # FLOW 2: Patient Consent Registration (arg is a UHID)
-                patient = Patient.query.filter_by(uhid=arg).first()
-                if patient:
-                    patient.telegram_chat_id = str(chat_id)
-                    patient.consent_status = 'Accepted'
-                    db.session.commit()
+                    patient = Patient.query.filter_by(uhid=uhid).first()
+                    if patient:
+                        patient.telegram_chat_id = str(chat_id)
+                        patient.consent_status = 'Accepted'
+                        db.session.commit()
 
-                    success_msg = f"✅ Registration successful! Welcome to DoseTrack, {patient.name}. You will now receive your medication reminders here."
-                    send_tg_message(chat_id, success_msg)
-                    return jsonify({"status": "success"}), 200
+                        try:
+                            import json
+                            with open('app/translations.json', 'r', encoding='utf-8') as tf:
+                                trans_dict = json.load(tf)
+                            lang = patient.preferred_language if patient.preferred_language in trans_dict else 'English'
+                            welcome = trans_dict.get(lang, trans_dict.get('English', {})).get('reminder_header', '🔔')
+                            success_msg = f"{welcome}" + chr(10) + f"✅ Registration successful! Welcome {patient.name}."
+                        except Exception:
+                            success_msg = f"✅ Registration successful! Welcome {patient.name}."
+
+                        send_tg_message(chat_id, success_msg)
+                        return jsonify({"status": "success"}), 200
 
         return jsonify({"status": "success"}), 200
     except Exception as e:
