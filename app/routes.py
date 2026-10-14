@@ -263,7 +263,7 @@ def telegram_webhook():
 
                             # DUPLICATE PREVENTION: If already accepted, do not resend consent buttons
                             if patient.consent_status == 'Accepted' and patient.telegram_chat_id == chat_id:
-                                msg = t.get('already_registered', f"✅ You are already registered, {patient.name}.")
+                                msg = t.get('already_registered', "✅ You are already registered, {patient.name}.").replace('{patient.name}', patient.name)
                                 send_tg_message(chat_id, msg)
                                 return jsonify({"status": "success"}), 200
 
@@ -281,7 +281,7 @@ def telegram_webhook():
                             ]}
 
                             msg_lines = [
-                                t.get('welcome_msg', f"Hello {patient.name}! Welcome to DoseTrack.") + chr(10),
+                                t.get('welcome_msg', "Hello {patient.name}! Welcome to DoseTrack.").replace('{patient.name}', patient.name) + chr(10),
                                 t.get('consent_title', "*Informed Consent:*"),
                                 t.get('consent_prompt', "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?")
                             ]
