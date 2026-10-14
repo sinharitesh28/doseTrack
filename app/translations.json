@@ -5,7 +5,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Assamese": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -13,7 +21,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Bengali": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -21,7 +37,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Bodo": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -29,7 +53,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Dogri": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -37,7 +69,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Gujarati": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -45,7 +85,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Hindi": {
         "reminder_header": "🔔 *दवा अनुस्मारक (Reminder)*",
@@ -53,7 +101,15 @@
         "dose": "🩸 खुराक:",
         "record_prompt": "कृपया नीचे अपनी प्रतिक्रिया दर्ज करें:",
         "btn_taken": "✅ ले ली",
-        "btn_missed": "❌ छूट गई"
+        "btn_missed": "❌ छूट गई",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Kannada": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -61,7 +117,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Kashmiri": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -69,7 +133,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Konkani": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -77,7 +149,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Maithili": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -85,7 +165,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Malayalam": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -93,7 +181,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Manipuri": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -101,7 +197,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Marathi": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -109,7 +213,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Nepali": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -117,7 +229,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Odia": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -125,7 +245,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Punjabi": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -133,7 +261,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Sanskrit": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -141,7 +277,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Santhali": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -149,7 +293,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Sindhi": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -157,7 +309,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Tamil": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -165,7 +325,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Telugu": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -173,7 +341,15 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     },
     "Urdu": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -181,6 +357,14 @@
         "dose": "🩸 Dose:",
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
-        "btn_missed": "❌ Missed"
+        "btn_missed": "❌ Missed",
+        "btn_accept": "✅ I Accept",
+        "btn_deny": "❌ I Deny",
+        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
+        "consent_title": "*Informed Consent:*",
+        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
+        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
+        "consent_denied": "❌ You have denied consent.",
+        "already_registered": "✅ You are already registered."
     }
 }
