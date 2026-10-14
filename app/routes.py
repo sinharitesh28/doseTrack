@@ -142,7 +142,7 @@ def save_clinical_data():
 # SERVERLESS TELEGRAM WEBHOOK (Replaces bot.py)
 # ==========================================
 
-@main_bp.route('/cron_reminders', methods=['GET', 'POST'])
+@main_bp.route('/api/cron/reminders', methods=['GET', 'POST'])
 def cron_reminders():
     secret = request.args.get('secret')
     if secret != "dose_cron_secure_123":
@@ -209,57 +209,110 @@ def cron_reminders():
 def telegram_webhook():
     try:
         data = request.json
-        if not data or 'message' not in data:
+        if not data:
             return jsonify({"status": "ignored"}), 200
 
-        message = data.get('message', {})
-        text = message.get('text', '')
-        chat_id = message.get('chat', {}).get('id')
+        # --- FLOW 1: Standard Text Messages (e.g. /start command) ---
+        if 'message' in data:
+            message = data['message']
+            text = message.get('text', '')
+            chat_id = message.get('chat', {}).get('id')
 
-        if text.startswith('/start'):
-            parts = text.split(' ')
-            if len(parts) > 1:
-                arg = parts[1].strip()
+            if text.startswith('/start'):
+                parts = text.split(' ')
+                if len(parts) > 1:
+                    arg = parts[1].strip()
 
-                if arg.startswith('auth_'):
-                    auth = AuthToken.query.get(arg)
-                    if auth and auth.status == 'Pending':
-                        auth.telegram_id = str(chat_id)
-                        user = User.query.get(str(chat_id))
-                        if user and user.status == 'Active':
-                            auth.status = 'Approved'
-                            send_tg_message(chat_id, "✅ Login successful! You may return to your web browser.")
-                        else:
-                            auth.status = 'Denied'
-                            send_tg_message(chat_id, "❌ Unauthorized. Your Telegram account is not registered.")
-                        db.session.commit()
-                        return jsonify({"status": "success"}), 200
-                else:
-                    import base64
-                    try:
-                        padding = '=' * (4 - len(arg) % 4)
-                        uhid = base64.urlsafe_b64decode(arg + padding).decode('utf-8')
-                    except Exception:
-                        uhid = arg
+                    # STAFF LOGIN
+                    if arg.startswith('auth_'):
+                        auth = AuthToken.query.get(arg)
+                        if auth and auth.status == 'Pending':
+                            auth.telegram_id = str(chat_id)
+                            user = User.query.get(str(chat_id))
+                            if user and user.status == 'Active':
+                                auth.status = 'Approved'
+                                send_tg_message(chat_id, "✅ Login successful! You may return to your web browser.")
+                            else:
+                                auth.status = 'Denied'
+                                send_tg_message(chat_id, "❌ Unauthorized. Your Telegram account is not registered.")
+                            db.session.commit()
+                            return jsonify({"status": "success"}), 200
 
-                    patient = Patient.query.filter_by(uhid=uhid).first()
-                    if patient:
-                        patient.telegram_chat_id = str(chat_id)
-                        patient.consent_status = 'Accepted'
-                        db.session.commit()
-
+                    # PATIENT CONSENT REGISTRATION
+                    else:
+                        import base64
                         try:
-                            import json
-                            with open('app/translations.json', 'r', encoding='utf-8') as tf:
-                                trans_dict = json.load(tf)
-                            lang = patient.preferred_language if patient.preferred_language in trans_dict else 'English'
-                            welcome = trans_dict.get(lang, trans_dict.get('English', {})).get('reminder_header', '🔔')
-                            success_msg = f"{welcome}" + chr(10) + f"✅ Registration successful! Welcome {patient.name}."
+                            padding = '=' * (4 - len(arg) % 4)
+                            uhid = base64.urlsafe_b64decode(arg + padding).decode('utf-8')
                         except Exception:
-                            success_msg = f"✅ Registration successful! Welcome {patient.name}."
+                            uhid = arg
 
-                        send_tg_message(chat_id, success_msg)
-                        return jsonify({"status": "success"}), 200
+                        patient = Patient.query.filter_by(uhid=uhid).first()
+                        if patient:
+                            patient.telegram_chat_id = str(chat_id)
+                            patient.consent_status = 'Pending'
+                            db.session.commit()
+
+                            # Send Interactive Consent Buttons
+                            kb = {"inline_keyboard": [
+                                [{"text": "✅ I Accept", "callback_data": f"consent:{uhid}:Accepted"}], 
+                                [{"text": "❌ I Deny", "callback_data": f"consent:{uhid}:Denied"}]
+                            ]}
+
+                            msg = (
+                                f"Hello {patient.name}! Welcome to DoseTrack." + chr(10) + chr(10) + 
+                                "*Informed Consent:*" + chr(10) + 
+                                "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?"
+                            )
+                            send_tg_message(chat_id, msg, reply_markup=kb)
+                            return jsonify({"status": "success"}), 200
+
+        # --- FLOW 2: Interactive Button Clicks (Callback Queries) ---
+        elif 'callback_query' in data:
+            cb = data['callback_query']
+            cb_id = cb['id']
+            cb_data = cb.get('data', '')
+            chat_id = str(cb['message']['chat']['id'])
+            msg_id = cb['message']['message_id']
+
+            # Immediately acknowledge the button click to remove loading icon
+            requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/answerCallbackQuery", json={"callback_query_id": cb_id})
+
+            # 2a. Handling Consent Clicks
+            if cb_data.startswith("consent:"):
+                parts = cb_data.split(":")
+                if len(parts) == 3:
+                    _, uhid, status = parts
+                    patient = Patient.query.get(uhid)
+                    if patient:
+                        patient.consent_status = status
+                        db.session.commit()
+                        if status == "Accepted":
+                            edit_tg_message(chat_id, msg_id, "✅ Thank you! You have accepted the consent. You will now receive reminders.")
+                        else:
+                            edit_tg_message(chat_id, msg_id, "❌ You have denied consent.")
+
+            # 2b. Handling Dosage Response Clicks (e.g. "12:Taken")
+            elif ":" in cb_data and not cb_data.startswith("adm_"):
+                parts = cb_data.split(":", 1)
+                if len(parts) == 2:
+                    log_id_str, status = parts
+                    try:
+                        log_id = int(log_id_str)
+                        log = DosageLog.query.get(log_id)
+                        # Only record if it hasn't been answered yet
+                        if log and log.status == 'Pending':
+                            log.status = status
+                            from datetime import timezone
+                            log.response_time = datetime.now(timezone.utc)
+                            db.session.commit()
+
+                            icon = "✅" if status == "Taken" else "❌"
+                            edit_tg_message(chat_id, msg_id, f"{icon} Response recorded: {status}")
+                    except ValueError:
+                        pass
+
+            return jsonify({"status": "success"}), 200
 
         return jsonify({"status": "success"}), 200
     except Exception as e:
