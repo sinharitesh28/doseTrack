@@ -212,11 +212,19 @@ def telegram_webhook():
         if not data:
             return jsonify({"status": "ignored"}), 200
 
-        # --- FLOW 1: Standard Text Messages (e.g. /start command) ---
+        # Load translations
+        try:
+            import json
+            with open('app/translations.json', 'r', encoding='utf-8') as tf:
+                trans_dict = json.load(tf)
+        except Exception:
+            trans_dict = {}
+
+        # --- FLOW 1: Standard Text Messages ---
         if 'message' in data:
             message = data['message']
             text = message.get('text', '')
-            chat_id = message.get('chat', {}).get('id')
+            chat_id = str(message.get('chat', {}).get('id'))
 
             if text.startswith('/start'):
                 parts = text.split(' ')
@@ -227,8 +235,8 @@ def telegram_webhook():
                     if arg.startswith('auth_'):
                         auth = AuthToken.query.get(arg)
                         if auth and auth.status == 'Pending':
-                            auth.telegram_id = str(chat_id)
-                            user = User.query.get(str(chat_id))
+                            auth.telegram_id = chat_id
+                            user = User.query.get(chat_id)
                             if user and user.status == 'Active':
                                 auth.status = 'Approved'
                                 send_tg_message(chat_id, "✅ Login successful! You may return to your web browser.")
@@ -249,25 +257,40 @@ def telegram_webhook():
 
                         patient = Patient.query.filter_by(uhid=uhid).first()
                         if patient:
-                            patient.telegram_chat_id = str(chat_id)
+                            # Load Preferred Language
+                            lang = patient.preferred_language if patient.preferred_language in trans_dict else 'English'
+                            t = trans_dict.get(lang, trans_dict.get('English', {}))
+
+                            # DUPLICATE PREVENTION: If already accepted, do not resend consent buttons
+                            if patient.consent_status == 'Accepted' and patient.telegram_chat_id == chat_id:
+                                msg = t.get('already_registered', f"✅ You are already registered, {patient.name}.")
+                                send_tg_message(chat_id, msg)
+                                return jsonify({"status": "success"}), 200
+
+                            patient.telegram_chat_id = chat_id
                             patient.consent_status = 'Pending'
                             db.session.commit()
 
-                            # Send Interactive Consent Buttons
+                            # Multi-Language Buttons & Text
+                            btn_accept = t.get('btn_accept', '✅ I Accept')
+                            btn_deny = t.get('btn_deny', '❌ I Deny')
+
                             kb = {"inline_keyboard": [
-                                [{"text": "✅ I Accept", "callback_data": f"consent:{uhid}:Accepted"}], 
-                                [{"text": "❌ I Deny", "callback_data": f"consent:{uhid}:Denied"}]
+                                [{"text": btn_accept, "callback_data": f"consent:{uhid}:Accepted"}], 
+                                [{"text": btn_deny, "callback_data": f"consent:{uhid}:Denied"}]
                             ]}
 
-                            msg = (
-                                f"Hello {patient.name}! Welcome to DoseTrack." + chr(10) + chr(10) + 
-                                "*Informed Consent:*" + chr(10) + 
-                                "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?"
-                            )
+                            msg_lines = [
+                                t.get('welcome_msg', f"Hello {patient.name}! Welcome to DoseTrack.") + chr(10),
+                                t.get('consent_title', "*Informed Consent:*"),
+                                t.get('consent_prompt', "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?")
+                            ]
+                            msg = chr(10).join(msg_lines)
+
                             send_tg_message(chat_id, msg, reply_markup=kb)
                             return jsonify({"status": "success"}), 200
 
-        # --- FLOW 2: Interactive Button Clicks (Callback Queries) ---
+        # --- FLOW 2: Interactive Button Clicks ---
         elif 'callback_query' in data:
             cb = data['callback_query']
             cb_id = cb['id']
@@ -275,10 +298,8 @@ def telegram_webhook():
             chat_id = str(cb['message']['chat']['id'])
             msg_id = cb['message']['message_id']
 
-            # Immediately acknowledge the button click to remove loading icon
             requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/answerCallbackQuery", json={"callback_query_id": cb_id})
 
-            # 2a. Handling Consent Clicks
             if cb_data.startswith("consent:"):
                 parts = cb_data.split(":")
                 if len(parts) == 3:
@@ -287,12 +308,17 @@ def telegram_webhook():
                     if patient:
                         patient.consent_status = status
                         db.session.commit()
-                        if status == "Accepted":
-                            edit_tg_message(chat_id, msg_id, "✅ Thank you! You have accepted the consent. You will now receive reminders.")
-                        else:
-                            edit_tg_message(chat_id, msg_id, "❌ You have denied consent.")
 
-            # 2b. Handling Dosage Response Clicks (e.g. "12:Taken")
+                        lang = patient.preferred_language if patient.preferred_language in trans_dict else 'English'
+                        t = trans_dict.get(lang, trans_dict.get('English', {}))
+
+                        if status == "Accepted":
+                            msg = t.get('consent_accepted', "✅ Thank you! You have accepted the consent. You will now receive reminders.")
+                        else:
+                            msg = t.get('consent_denied', "❌ You have denied consent.")
+
+                        edit_tg_message(chat_id, msg_id, msg)
+
             elif ":" in cb_data and not cb_data.startswith("adm_"):
                 parts = cb_data.split(":", 1)
                 if len(parts) == 2:
@@ -300,7 +326,6 @@ def telegram_webhook():
                     try:
                         log_id = int(log_id_str)
                         log = DosageLog.query.get(log_id)
-                        # Only record if it hasn't been answered yet
                         if log and log.status == 'Pending':
                             log.status = status
                             from datetime import timezone
