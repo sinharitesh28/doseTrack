@@ -124,6 +124,24 @@ def resend_consent(uhid):
         return jsonify({"status": "success"}), 200
     return jsonify({"error": "Patient not found or no Telegram chat ID"}), 404
 
+@main_bp.route('/api/clinical', methods=['POST'])
+def save_clinical_data():
+    data = request.json
+    uhid = data['uhid']
+    for comp in data.get('complaints', []): db.session.add(PatientComplaint(uhid=uhid, hpo_id=comp['hpo_id'], hpo_term=comp['hpo_term'], duration=comp['duration']))
+    for diag in data.get('diagnoses', []): db.session.add(PatientDiagnosis(uhid=uhid, icd10_code=diag['icd10_code'], icd10_term=diag['icd10_term']))
+    for med in data.get('medications', []):
+        m = PatientMedication(uhid=uhid, rxcui=med['rxcui'], drug_name=med['drug_name'], dose=med['dose'], start_date=datetime.strptime(med['start_date'], '%Y-%m-%d').date(), end_date=datetime.strptime(med['end_date'], '%Y-%m-%d').date())
+        db.session.add(m)
+        db.session.flush() 
+        for time_str in med.get('timings', []): db.session.add(MedicationTiming(medication_id=m.id, dosage_time=datetime.strptime(time_str, '%H:%M').time()))
+    db.session.commit()
+    return jsonify({"status": "success"}), 201
+
+# ==========================================
+# SERVERLESS TELEGRAM WEBHOOK (Replaces bot.py)
+# ==========================================
+
 @main_bp.route('/cron_reminders', methods=['GET', 'POST'])
 def cron_reminders():
     secret = request.args.get('secret')
