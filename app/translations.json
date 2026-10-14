@@ -13,7 +13,7 @@
         "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
         "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
         "consent_denied": "❌ You have denied consent.",
-        "already_registered": "✅ You are already registered."
+        "already_registered": "✅ You are already registered, {patient.name}."
     },
     "Assamese": {
         "reminder_header": "🔔 *Medication Reminder*",
@@ -86,14 +86,14 @@
         "record_prompt": "Please record your response below:",
         "btn_taken": "✅ Taken",
         "btn_missed": "❌ Missed",
-        "btn_accept": "✅ I Accept",
-        "btn_deny": "❌ I Deny",
-        "welcome_msg": "Hello {patient.name}! Welcome to DoseTrack.",
-        "consent_title": "*Informed Consent:*",
-        "consent_prompt": "Do you consent to enroll in this study, receive automated dosage reminders, and record responses?",
-        "consent_accepted": "✅ Thank you! You have accepted the consent. You will now receive reminders.",
-        "consent_denied": "❌ You have denied consent.",
-        "already_registered": "✅ You are already registered."
+        "btn_accept": "✅ સંમત છું",
+        "btn_deny": "❌ અસંમત",
+        "welcome_msg": "નમસ્તે {patient.name}! DoseTrack માં આપનું સ્વાગત છે.",
+        "consent_title": "*સૂચિત સંમતિ:*",
+        "consent_prompt": "શું તમે આ અભ્યાસમાં નોંધણી કરવા, દવાઓના રિમાઇન્ડર મેળવવા અને પ્રતિભાવો નોંધવા માટે સંમતિ આપો છો?",
+        "consent_accepted": "✅ આભાર! તમે સંમતિ સ્વીકારી છે. હવે તમને રિમાઇન્ડર્સ મળશે.",
+        "consent_denied": "❌ તમે સંમતિ નકારી છે.",
+        "already_registered": "✅ તમે પહેલેથી જ નોંધાયેલ છો, {patient.name}."
     },
     "Hindi": {
         "reminder_header": "🔔 *दवा अनुस्मारक (Reminder)*",
