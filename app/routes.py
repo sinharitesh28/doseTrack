@@ -299,8 +299,7 @@ def telegram_webhook():
             chat_id = str(cb['message']['chat']['id'])
             msg_id = cb['message']['message_id']
 
-            requests.post(f"https://api.telegram.org/bot{current_app.config["TELEGRAM_BOT_TOKEN"]}/answerCallbackQuery", json={"callback_query_id": cb_id})
-
+            requests.post(f"https://api.telegram.org/bot{current_app.config['TELEGRAM_BOT_TOKEN']}/answerCallbackQuery", json={"callback_query_id": cb_id})
             if cb_data.startswith("consent:"):
                 parts = cb_data.split(":")
                 if len(parts) == 3:
