@@ -7,21 +7,22 @@ from .database import db
 from .models import Patient, PatientComplaint, PatientDiagnosis, PatientMedication, MedicationTiming, User, AuthToken, DosageLog
 
 main_bp = Blueprint('main', __name__)
-TELEGRAM_TOKEN = "8615887860:AAHixEeOgVoEZzijqgpgF7-6LvYB_GWxN14"
+from flask import current_app
+# Token will be fetched dynamically via current_app.config["TELEGRAM_BOT_TOKEN"]
 TELEGRAM_BOT_URL = "t.me/Dosetrack_bot"
 ADMIN_CHAT_ID = "863968849"
 IST = timezone(timedelta(hours=5, minutes=30))
 
 # --- Helper Telegram Functions ---
 def send_tg_message(chat_id, text, reply_markup=None):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    url = f"https://api.telegram.org/bot{current_app.config["TELEGRAM_BOT_TOKEN"]}/sendMessage"
     payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
     if reply_markup:
         payload["reply_markup"] = reply_markup
     requests.post(url, json=payload)
 
 def edit_tg_message(chat_id, message_id, text):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/editMessageText"
+    url = f"https://api.telegram.org/bot{current_app.config["TELEGRAM_BOT_TOKEN"]}/editMessageText"
     requests.post(url, json={"chat_id": chat_id, "message_id": message_id, "text": text})
 
 # --- Middleware ---
@@ -298,7 +299,7 @@ def telegram_webhook():
             chat_id = str(cb['message']['chat']['id'])
             msg_id = cb['message']['message_id']
 
-            requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/answerCallbackQuery", json={"callback_query_id": cb_id})
+            requests.post(f"https://api.telegram.org/bot{current_app.config["TELEGRAM_BOT_TOKEN"]}/answerCallbackQuery", json={"callback_query_id": cb_id})
 
             if cb_data.startswith("consent:"):
                 parts = cb_data.split(":")
@@ -319,6 +320,31 @@ def telegram_webhook():
 
                         edit_tg_message(chat_id, msg_id, msg)
 
+            elif cb_data.startswith("adm_auth:"):
+                parts = cb_data.split(":")
+                if len(parts) == 3:
+                    _, token, status = parts
+                    auth = AuthToken.query.get(token)
+                    if auth:
+                        auth.status = status
+                        user_chat_id = auth.telegram_id
+
+                        if status == "Approved":
+                            existing_user = User.query.get(user_chat_id)
+                            if not existing_user:
+                                new_user = User(telegram_id=user_chat_id, first_name="Staff", role="User", status="Active")
+                                db.session.add(new_user)
+                            else:
+                                existing_user.status = 'Active'
+
+                            send_tg_message(user_chat_id, "✅ Admin approved! Your login is successful. Please return to your browser.")
+                            edit_tg_message(chat_id, msg_id, f"✅ You approved access for Chat ID: {user_chat_id}")
+                        else:
+                            send_tg_message(user_chat_id, "❌ The admin has denied your access request.")
+                            edit_tg_message(chat_id, msg_id, f"❌ You denied access for Chat ID: {user_chat_id}")
+
+                        db.session.commit()
+
             elif ":" in cb_data and not cb_data.startswith("adm_"):
                 parts = cb_data.split(":", 1)
                 if len(parts) == 2:
@@ -328,8 +354,8 @@ def telegram_webhook():
                         log = DosageLog.query.get(log_id)
                         if log and log.status == 'Pending':
                             log.status = status
-                            from datetime import timezone
-                            log.response_time = datetime.now(timezone.utc)
+                            # Removed redundant timezone import
+                            log.response_time = datetime.now(IST)
                             db.session.commit()
 
                             icon = "✅" if status == "Taken" else "❌"
