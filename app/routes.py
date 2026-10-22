@@ -15,14 +15,14 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 # --- Helper Telegram Functions ---
 def send_tg_message(chat_id, text, reply_markup=None):
-    url = f"https://api.telegram.org/bot{current_app.config['TELEGRAM_BOT_TOKEN']}/sendMessage"
+    url = f"https://api.telegram.org/bot{current_app.config["TELEGRAM_BOT_TOKEN"]}/sendMessage"
     payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
     if reply_markup:
         payload["reply_markup"] = reply_markup
     requests.post(url, json=payload)
 
 def edit_tg_message(chat_id, message_id, text):
-    url = f"https://api.telegram.org/bot{current_app.config['TELEGRAM_BOT_TOKEN']}/editMessageText"
+    url = f"https://api.telegram.org/bot{current_app.config["TELEGRAM_BOT_TOKEN"]}/editMessageText"
     requests.post(url, json={"chat_id": chat_id, "message_id": message_id, "text": text})
 
 # --- Middleware ---
@@ -227,23 +227,56 @@ def telegram_webhook():
             text = message.get('text', '')
             chat_id = str(message.get('chat', {}).get('id'))
 
+            # Check if user is in the middle of registration (Waiting for Name)
+            user = User.query.get(chat_id)
+            if user and user.status == 'Inactive' and user.first_name == 'WAITING_NAME' and not text.startswith('/start'):
+                user.first_name = text.strip()
+
+                # Find the pending auth token for this user
+                auth = AuthToken.query.filter_by(telegram_id=chat_id, status='Pending').first()
+                if auth:
+                    auth.status = 'WaitingForAdmin'
+
+                    # Send approval request to Admin
+                    admin_msg = f"🔔 *New Staff Login Request*\n\nName Provided: *{user.first_name}*\nChat ID: `{chat_id}`\n\nDo you want to grant this user access?"
+                    kb = {"inline_keyboard": [
+                        [{"text": "✅ Approve", "callback_data": f"adm_auth:{auth.token}:Approved"}],
+                        [{"text": "❌ Deny", "callback_data": f"adm_auth:{auth.token}:Denied"}]
+                    ]}
+                    send_tg_message(ADMIN_CHAT_ID, admin_msg, reply_markup=kb)
+
+                    send_tg_message(chat_id, "⏳ Thank you! A registration request has been sent to the system admin for approval.")
+                else:
+                    send_tg_message(chat_id, "❌ Session expired or invalid. Please scan the QR code again.")
+
+                db.session.commit()
+                return jsonify({"status": "success"}), 200
+
             if text.startswith('/start'):
                 parts = text.split(' ')
                 if len(parts) > 1:
                     arg = parts[1].strip()
 
-                    # STAFF LOGIN
+                    # STAFF LOGIN VIA QR
                     if arg.startswith('auth_'):
                         auth = AuthToken.query.get(arg)
                         if auth and auth.status == 'Pending':
                             auth.telegram_id = chat_id
-                            user = User.query.get(chat_id)
+
                             if user and user.status == 'Active':
                                 auth.status = 'Approved'
                                 send_tg_message(chat_id, "✅ Login successful! You may return to your web browser.")
                             else:
-                                auth.status = 'Denied'
-                                send_tg_message(chat_id, "❌ Unauthorized. Your Telegram account is not registered.")
+                                # Start Registration Workflow for New or Inactive Users
+                                if not user:
+                                    new_user = User(telegram_id=chat_id, first_name="WAITING_NAME", role="User", status="Inactive")
+                                    db.session.add(new_user)
+                                else:
+                                    user.first_name = "WAITING_NAME"
+                                    user.status = 'Inactive'
+
+                                send_tg_message(chat_id, "👋 Welcome! Please reply to this message with your *Full Name* so the system admin can recognize and approve you.")
+
                             db.session.commit()
                             return jsonify({"status": "success"}), 200
 
@@ -258,11 +291,9 @@ def telegram_webhook():
 
                         patient = Patient.query.filter_by(uhid=uhid).first()
                         if patient:
-                            # Load Preferred Language
                             lang = patient.preferred_language if patient.preferred_language in trans_dict else 'English'
                             t = trans_dict.get(lang, trans_dict.get('English', {}))
 
-                            # DUPLICATE PREVENTION: If already accepted, do not resend consent buttons
                             if patient.consent_status == 'Accepted' and patient.telegram_chat_id == chat_id:
                                 msg = t.get('already_registered', "✅ You are already registered, {patient.name}.").replace('{patient.name}', patient.name)
                                 send_tg_message(chat_id, msg)
@@ -272,7 +303,6 @@ def telegram_webhook():
                             patient.consent_status = 'Pending'
                             db.session.commit()
 
-                            # Multi-Language Buttons & Text
                             btn_accept = t.get('btn_accept', '✅ I Accept')
                             btn_deny = t.get('btn_deny', '❌ I Deny')
 
@@ -300,7 +330,32 @@ def telegram_webhook():
             msg_id = cb['message']['message_id']
 
             requests.post(f"https://api.telegram.org/bot{current_app.config['TELEGRAM_BOT_TOKEN']}/answerCallbackQuery", json={"callback_query_id": cb_id})
-            if cb_data.startswith("consent:"):
+
+            # Admin Approval Logic
+            if cb_data.startswith("adm_auth:"):
+                parts = cb_data.split(":")
+                if len(parts) == 3:
+                    _, token, status = parts
+                    auth = AuthToken.query.get(token)
+                    if auth:
+                        auth.status = status
+                        user_chat_id = auth.telegram_id
+
+                        user_account = User.query.get(user_chat_id)
+
+                        if status == "Approved":
+                            if user_account:
+                                user_account.status = 'Active'
+                            send_tg_message(user_chat_id, f"✅ Admin approved! Welcome, {user_account.first_name if user_account else 'Staff'}. Your login is successful. Please return to your browser.")
+                            edit_tg_message(chat_id, msg_id, f"✅ You approved access for: {user_account.first_name if user_account else 'Unknown'} ({user_chat_id})")
+                        else:
+                            send_tg_message(user_chat_id, "❌ The admin has denied your access request.")
+                            edit_tg_message(chat_id, msg_id, f"❌ You denied access for: {user_account.first_name if user_account else 'Unknown'} ({user_chat_id})")
+
+                        db.session.commit()
+
+            # Patient Consent Logic
+            elif cb_data.startswith("consent:"):
                 parts = cb_data.split(":")
                 if len(parts) == 3:
                     _, uhid, status = parts
@@ -319,32 +374,8 @@ def telegram_webhook():
 
                         edit_tg_message(chat_id, msg_id, msg)
 
-            elif cb_data.startswith("adm_auth:"):
-                parts = cb_data.split(":")
-                if len(parts) == 3:
-                    _, token, status = parts
-                    auth = AuthToken.query.get(token)
-                    if auth:
-                        auth.status = status
-                        user_chat_id = auth.telegram_id
-
-                        if status == "Approved":
-                            existing_user = User.query.get(user_chat_id)
-                            if not existing_user:
-                                new_user = User(telegram_id=user_chat_id, first_name="Staff", role="User", status="Active")
-                                db.session.add(new_user)
-                            else:
-                                existing_user.status = 'Active'
-
-                            send_tg_message(user_chat_id, "✅ Admin approved! Your login is successful. Please return to your browser.")
-                            edit_tg_message(chat_id, msg_id, f"✅ You approved access for Chat ID: {user_chat_id}")
-                        else:
-                            send_tg_message(user_chat_id, "❌ The admin has denied your access request.")
-                            edit_tg_message(chat_id, msg_id, f"❌ You denied access for Chat ID: {user_chat_id}")
-
-                        db.session.commit()
-
-            elif ":" in cb_data and not cb_data.startswith("adm_"):
+            # Medication Response Logic
+            elif ":" in cb_data and not cb_data.startswith("adm_") and not cb_data.startswith("consent:"):
                 parts = cb_data.split(":", 1)
                 if len(parts) == 2:
                     log_id_str, status = parts
@@ -353,7 +384,8 @@ def telegram_webhook():
                         log = DosageLog.query.get(log_id)
                         if log and log.status == 'Pending':
                             log.status = status
-                            # Removed redundant timezone import
+                            from datetime import datetime, timedelta, timezone
+                            IST = timezone(timedelta(hours=5, minutes=30))
                             log.response_time = datetime.now(IST)
                             db.session.commit()
 
