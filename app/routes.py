@@ -15,14 +15,14 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 # --- Helper Telegram Functions ---
 def send_tg_message(chat_id, text, reply_markup=None):
-    url = f"https://api.telegram.org/bot{current_app.config["TELEGRAM_BOT_TOKEN"]}/sendMessage"
+    url = f"https://api.telegram.org/bot{current_app.config['TELEGRAM_BOT_TOKEN']}/sendMessage"
     payload = {"chat_id": chat_id, "text": text, "parse_mode": "Markdown"}
     if reply_markup:
         payload["reply_markup"] = reply_markup
     requests.post(url, json=payload)
 
 def edit_tg_message(chat_id, message_id, text):
-    url = f"https://api.telegram.org/bot{current_app.config["TELEGRAM_BOT_TOKEN"]}/editMessageText"
+    url = f"https://api.telegram.org/bot{current_app.config['TELEGRAM_BOT_TOKEN']}/editMessageText"
     requests.post(url, json={"chat_id": chat_id, "message_id": message_id, "text": text})
 
 # --- Middleware ---
