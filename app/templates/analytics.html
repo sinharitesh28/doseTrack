@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DoseTrack Analytics</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; }
+        .navbar { display: flex; justify-content: space-between; background: #2c3e50; padding: 15px; color: white; border-radius: 8px;}
+        .navbar a { color: white; text-decoration: none; margin-left: 15px; font-weight: bold; }
+        .dashboard { display: flex; gap: 20px; margin-top: 30px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); flex: 1; text-align: center;}
+        .card h3 { margin: 0; color: #7f8c8d; font-size: 16px; }
+        .card h1 { margin: 10px 0 0 0; color: #2c3e50; font-size: 36px; }
+        .btn-download { display: inline-block; margin-top: 30px; background: #27ae60; color: white; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-size: 18px; font-weight: bold;}
+        .btn-download:hover { background: #2ecc71; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <div><strong>💊 DoseTrack System</strong></div>
+        <div>
+            <a href="/">Home</a>
+            <a href="/analytics">Analytics</a>
+            {% if session.get('role') == 'Admin' %}
+            <a href="/admin">Admin Panel</a>
+            {% endif %}
+            <a href="/logout">Logout</a>
+        </div>
+    </div>
+
+    <h2 style="color: #2c3e50; margin-top: 30px;">Clinical Data & Analytics</h2>
+
+    <div class="dashboard">
+        <div class="card">
+            <h3>Total Registered Patients</h3>
+            <h1>{{ total_patients }}</h1>
+        </div>
+        <div class="card">
+            <h3>Active Consents</h3>
+            <h1>{{ active_consents }}</h1>
+        </div>
+        <div class="card">
+            <h3>Overall Adherence Rate</h3>
+            <h1>{{ adherence_rate }}%</h1>
+        </div>
+    </div>
+
+    <center>
+        <a href="/api/analytics/export" class="btn-download">📥 Download Patient Data (CSV)</a>
+    </center>
+
+</body>
+</html>
