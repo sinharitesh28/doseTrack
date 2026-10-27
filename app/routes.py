@@ -400,3 +400,60 @@ def telegram_webhook():
         db.session.rollback()
         print(f"Webhook Error: {e}")
         return jsonify({"status": "error"}), 500
+# ==========================================
+# ANALYTICS & CSV EXPORT ROUTES
+# ==========================================
+import csv
+from io import StringIO
+from flask import Response
+
+@main_bp.route('/analytics')
+def analytics():
+    # Ensure the user is logged in
+    if 'telegram_id' not in session:
+        return redirect(url_for('main.login'))
+    
+    # Calculate Clinical Data Aggregations
+    total_patients = Patient.query.count()
+    active_consents = Patient.query.filter_by(consent_status='Accepted').count()
+    
+    total_logs = DosageLog.query.count()
+    taken_logs = DosageLog.query.filter_by(status='Taken').count()
+    
+    # Prevent division by zero
+    adherence_rate = round((taken_logs / total_logs * 100), 2) if total_logs > 0 else 0
+
+    return render_template(
+        'analytics.html', 
+        total_patients=total_patients, 
+        active_consents=active_consents,
+        total_logs=total_logs,
+        adherence_rate=adherence_rate
+    )
+
+@main_bp.route('/api/analytics/export')
+def export_analytics_csv():
+    # Ensure the user is logged in
+    if 'telegram_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    # Initialize CSV Writer
+    si = StringIO()
+    cw = csv.writer(si)
+    
+    # Write Header Row
+    cw.writerow(['Patient UHID', 'Patient Name', 'Age', 'Gender', 'Consent Status', 'Total Medications', 'Total Diagnoses'])
+    
+    # Fetch all patients and aggregate their clinical data
+    patients = Patient.query.all()
+    for p in patients:
+        med_count = PatientMedication.query.filter_by(uhid=p.uhid).count()
+        diag_count = PatientDiagnosis.query.filter_by(uhid=p.uhid).count()
+        cw.writerow([p.uhid, p.name, p.age, p.gender, p.consent_status, med_count, diag_count])
+        
+    output = si.getvalue()
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=clinical_analytics_report.csv"}
+    )
