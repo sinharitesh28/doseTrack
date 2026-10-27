@@ -24,7 +24,6 @@ def send_tg_message(chat_id, text, reply_markup=None):
 def edit_tg_message(chat_id, message_id, text):
     url = f"https://api.telegram.org/bot{current_app.config['TELEGRAM_BOT_TOKEN']}/editMessageText"
     requests.post(url, json={"chat_id": chat_id, "message_id": message_id, "text": text})
-
 # --- Middleware ---
 @main_bp.before_request
 def require_auth():
