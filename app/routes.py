@@ -409,51 +409,68 @@ from flask import Response
 
 @main_bp.route('/analytics')
 def analytics():
-    # Ensure the user is logged in
     if 'telegram_id' not in session:
         return redirect(url_for('main.login'))
     
-    # Calculate Clinical Data Aggregations
+    # 1. Determine Date Range
+    time_range = request.args.get('range', '7days')
+    today = datetime.now(IST).date()
+    
+    if time_range == '1month':
+        days_back = 30
+        start_date = today - timedelta(days=days_back-1)
+    elif time_range == 'overall':
+        first_log = DosageLog.query.order_by(DosageLog.scheduled_datetime.asc()).first()
+        start_date = first_log.scheduled_datetime.date() if first_log else today
+    else:
+        days_back = 7
+        start_date = today - timedelta(days=days_back-1)
+        
+    delta_days = (today - start_date).days + 1
+    
+    # 2. Fetch all logs in the range efficiently
+    start_dt = datetime.combine(start_date, datetime.min.time())
+    end_dt = datetime.combine(today, datetime.max.time())
+    
+    logs_in_range = DosageLog.query.filter(DosageLog.scheduled_datetime >= start_dt, DosageLog.scheduled_datetime <= end_dt).all()
+    
+    # Group logs by date
+    logs_by_date = {}
+    for log in logs_in_range:
+        l_date = log.scheduled_datetime.date()
+        if l_date not in logs_by_date:
+            logs_by_date[l_date] = []
+        logs_by_date[l_date].append(log)
+        
+    # 3. Generate Chart Data
+    labels = []
+    adherence_data = []
+    
+    for i in range(delta_days):
+        current_date = start_date + timedelta(days=i)
+        labels.append(current_date.strftime('%b %d'))
+        
+        day_logs = logs_by_date.get(current_date, [])
+        d_total = len(day_logs)
+        d_taken = sum(1 for l in day_logs if l.status == 'Taken')
+        d_rate = round((d_taken / d_total * 100), 2) if d_total > 0 else 0
+        adherence_data.append(d_rate)
+
+    # 4. Calculate Summary Stats for the selected range
+    total_logs = len(logs_in_range)
+    taken_logs = sum(1 for l in logs_in_range if l.status == 'Taken')
+    adherence_rate = round((taken_logs / total_logs * 100), 2) if total_logs > 0 else 0
+
     total_patients = Patient.query.count()
     active_consents = Patient.query.filter_by(consent_status='Accepted').count()
-    
-    total_logs = DosageLog.query.count()
-    taken_logs = DosageLog.query.filter_by(status='Taken').count()
-    
-    # Prevent division by zero
-    adherence_rate = round((taken_logs / total_logs * 100), 2) if total_logs > 0 else 0
 
     return render_template(
         'analytics.html', 
         total_patients=total_patients, 
         active_consents=active_consents,
         total_logs=total_logs,
-        adherence_rate=adherence_rate
-    )
-
-@main_bp.route('/api/analytics/export')
-def export_analytics_csv():
-    # Ensure the user is logged in
-    if 'telegram_id' not in session:
-        return jsonify({"error": "Unauthorized"}), 401
-    
-    # Initialize CSV Writer
-    si = StringIO()
-    cw = csv.writer(si)
-    
-    # Write Header Row
-    cw.writerow(['Patient UHID', 'Patient Name', 'Age', 'Gender', 'Consent Status', 'Total Medications', 'Total Diagnoses'])
-    
-    # Fetch all patients and aggregate their clinical data
-    patients = Patient.query.all()
-    for p in patients:
-        med_count = PatientMedication.query.filter_by(uhid=p.uhid).count()
-        diag_count = PatientDiagnosis.query.filter_by(uhid=p.uhid).count()
-        cw.writerow([p.uhid, p.name, p.age, p.gender, p.consent_status, med_count, diag_count])
-        
-    output = si.getvalue()
-    return Response(
-        output,
-        mimetype="text/csv",
-        headers={"Content-Disposition": "attachment;filename=clinical_analytics_report.csv"}
+        adherence_rate=adherence_rate,
+        chart_labels=labels,
+        chart_data=adherence_data,
+        current_range=time_range
     )
