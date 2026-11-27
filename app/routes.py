@@ -411,7 +411,8 @@ from flask import Response
 def analytics():
     if 'telegram_id' not in session:
         return redirect(url_for('main.login'))
-    
+    from datetime import datetime, timedelta, timezone
+    IST = timezone(timedelta(hours=5, minutes=30))
     # 1. Determine Date Range
     time_range = request.args.get('range', '7days')
     today = datetime.now(IST).date()
