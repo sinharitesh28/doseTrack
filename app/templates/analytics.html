@@ -2,34 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>DoseTrack Analytics</title>
+    <title>DoseTrack Analytics & Data Export</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f7f6; padding: 20px; margin: 0; }
-        .navbar { display: flex; justify-content: space-between; background: #2c3e50; padding: 15px 20px; color: white; border-radius: 8px;}
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f7f6; padding: 20px; margin: 0; color: #2c3e50; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: #2c3e50; padding: 15px 20px; color: white; border-radius: 8px; }
         .navbar a { color: white; text-decoration: none; margin-left: 15px; font-weight: bold; }
-        
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
-        .filter-group { display: flex; gap: 10px; }
-        .btn-filter { background: #ecf0f1; color: #2c3e50; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; border: 2px solid #bdc3c7; transition: 0.2s;}
-        .btn-filter:hover { background: #bdc3c7; }
-        .btn-filter.active { background: #3498db; color: white; border-color: #2980b9; }
-        
-        .btn-download { background: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; border: 2px solid #2ecc71; transition: 0.2s;}
-        .btn-download:hover { background: #2ecc71; }
 
-        .dashboard { display: flex; gap: 20px; margin-top: 20px; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); flex: 1; text-align: center;}
-        .card h3 { margin: 0; color: #7f8c8d; font-size: 16px; }
-        .card h1 { margin: 10px 0 0 0; color: #2c3e50; font-size: 36px; }
-        
-        .chart-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-top: 20px; }
+        .controls { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; margin-top: 24px; }
+        .filter-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .btn-filter { background: #ecf0f1; color: #2c3e50; padding: 8px 14px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 13px; border: 1px solid #bdc3c7; transition: 0.2s; }
+        .btn-filter:hover { background: #dce4e7; }
+        .btn-filter.active { background: #3498db; color: white; border-color: #2980b9; }
+
+        .export-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+        .btn-download { background: #27ae60; color: white; padding: 9px 16px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 13px; border: 1px solid #219653; transition: 0.2s; }
+        .btn-download:hover { background: #219653; }
+        .btn-download.secondary { background: #2980b9; border-color: #2471a3; }
+        .btn-download.secondary:hover { background: #2471a3; }
+
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 20px; }
+        .card { background: white; padding: 18px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); text-align: center; }
+        .card h3 { margin: 0; color: #7f8c8d; font-size: 14px; text-transform: uppercase; letter-spacing: 0.4px; }
+        .card h1 { margin: 8px 0 4px 0; color: #2c3e50; font-size: 32px; }
+        .card small { color: #7f8c8d; font-size: 12px; }
+
+        .section-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-top: 22px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #ecf0f1; padding-bottom: 10px; }
+        .section-header h3 { margin: 0; color: #2c3e50; }
+
+        .table-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
+        .table-card { border: 1px solid #e0e6ed; border-radius: 6px; padding: 14px; background: #fafbfc; display: flex; flex-direction: column; justify-content: space-between; }
+        .table-card.selected { border: 2px solid #3498db; background: #f0f8ff; }
+        .table-card-title { font-weight: bold; font-size: 14px; color: #2c3e50; margin-bottom: 4px; }
+        .table-card-meta { font-size: 12px; color: #7f8c8d; margin-bottom: 12px; font-family: monospace; }
+        .table-card-actions { display: flex; gap: 8px; }
+        .btn-mini { padding: 6px 10px; font-size: 12px; border-radius: 4px; text-decoration: none; font-weight: 600; text-align: center; flex: 1; }
+        .btn-preview { background: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; }
+        .btn-preview:hover { background: #dce4e7; }
+        .btn-csv { background: #27ae60; color: white; }
+        .btn-csv:hover { background: #219653; }
+
+        .preview-wrapper { overflow-x: auto; max-height: 440px; border: 1px solid #e0e6ed; border-radius: 6px; }
+        table.data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        table.data-table th { background: #2c3e50; color: white; position: sticky; top: 0; padding: 10px 12px; text-align: left; white-space: nowrap; }
+        table.data-table td { padding: 8px 12px; border-bottom: 1px solid #ecf0f1; white-space: nowrap; }
+        table.data-table tr:nth-child(even) { background: #f9fbfc; }
     </style>
 </head>
 <body>
 
     <div class="navbar">
-        <div><strong>💊 DoseTrack System</strong></div>
+        <div><strong>💊 DoseTrack Analytics & Data Warehouse</strong></div>
         <div>
             <a href="/">Home</a>
             <a href="/analytics">Analytics</a>
@@ -42,31 +66,101 @@
 
     <div class="controls">
         <div class="filter-group">
-            <a href="?range=7days" class="btn-filter {% if current_range == '7days' %}active{% endif %}">Last 7 Days</a>
-            <a href="?range=1month" class="btn-filter {% if current_range == '1month' %}active{% endif %}">Last 1 Month</a>
-            <a href="?range=overall" class="btn-filter {% if current_range == 'overall' %}active{% endif %}">Overall Data</a>
+            <span style="font-size: 13px; font-weight: bold; color: #7f8c8d;">Period:</span>
+            <a href="?range=7days&cohort={{ current_cohort }}&table={{ preview_table }}" class="btn-filter {% if current_range == '7days' %}active{% endif %}">Last 7 Days</a>
+            <a href="?range=1month&cohort={{ current_cohort }}&table={{ preview_table }}" class="btn-filter {% if current_range == '1month' %}active{% endif %}">Last 1 Month</a>
+            <a href="?range=overall&cohort={{ current_cohort }}&table={{ preview_table }}" class="btn-filter {% if current_range == 'overall' %}active{% endif %}">Overall Data</a>
+
+            <span style="font-size: 13px; font-weight: bold; color: #7f8c8d; margin-left: 10px;">Cohort:</span>
+            <a href="?range={{ current_range }}&cohort=all&table={{ preview_table }}" class="btn-filter {% if current_cohort == 'all' %}active{% endif %}">All Records</a>
+            <a href="?range={{ current_range }}&cohort=real&table={{ preview_table }}" class="btn-filter {% if current_cohort == 'real' %}active{% endif %}">Real Hospital</a>
+            <a href="?range={{ current_range }}&cohort=test&table={{ preview_table }}" class="btn-filter {% if current_cohort == 'test' %}active{% endif %}">Sandbox / Test</a>
         </div>
-        <a href="/api/analytics/export" class="btn-download">📥 Download Demographics CSV</a>
+
+        <div class="export-actions">
+            <a href="/api/analytics/export/all-xlsx" class="btn-download">📊 Download All Sheets (.XLSX)</a>
+            <a href="/api/analytics/export/all-zip" class="btn-download secondary">🗜️ Download All CSVs (.ZIP)</a>
+        </div>
     </div>
 
     <div class="dashboard">
         <div class="card">
-            <h3>Total Registered Patients</h3>
+            <h3>Registered Patients</h3>
             <h1>{{ total_patients }}</h1>
+            <small>Consented: {{ active_consents }}</small>
         </div>
         <div class="card">
-            <h3>Active Consents</h3>
-            <h1>{{ active_consents }}</h1>
+            <h3>Scheduled Reminders</h3>
+            <h1>{{ total_logs }}</h1>
+            <small>Taken: {{ taken_logs }} | Missed: {{ missed_logs }} | Pending: {{ pending_logs }}</small>
         </div>
         <div class="card">
-            <h3>Period Adherence Rate</h3>
+            <h3>Raw Adherence Rate</h3>
             <h1>{{ adherence_rate }}%</h1>
+            <small>Taken / All Scheduled</small>
+        </div>
+        <div class="card">
+            <h3>Actioned Adherence</h3>
+            <h1>{{ actioned_adherence_rate }}%</h1>
+            <small>Taken / (Taken + Missed)</small>
         </div>
     </div>
 
-    <div class="chart-container">
-        <h3 style="color: #2c3e50; margin-top: 0;">Medication Adherence Trend</h3>
-        <canvas id="adherenceChart" height="80"></canvas>
+    <div class="section-box">
+        <div class="section-header">
+            <h3>Medication Adherence Trend</h3>
+        </div>
+        <canvas id="adherenceChart" height="75"></canvas>
+    </div>
+
+    <div class="section-box">
+        <div class="section-header">
+            <h3>Database Tables & Analytical Sheets (Live Extraction)</h3>
+            <span style="font-size: 12px; color: #7f8c8d;">Click <strong>Inspect</strong> to preview rows or <strong>CSV</strong> to download individual sheets</span>
+        </div>
+        <div class="table-grid">
+            {% for t in table_cards %}
+            <div class="table-card {% if t.key == preview_table %}selected{% endif %}">
+                <div>
+                    <div class="table-card-title">{{ t.label }}</div>
+                    <div class="table-card-meta">{{ t.key }} &bull; {{ t.row_count }} rows &times; {{ t.col_count }} cols</div>
+                </div>
+                <div class="table-card-actions">
+                    <a href="?range={{ current_range }}&cohort={{ current_cohort }}&table={{ t.key }}#preview" class="btn-mini btn-preview">👁️ Inspect</a>
+                    <a href="/api/analytics/export/table/{{ t.key }}" class="btn-mini btn-csv">📥 CSV</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="section-box" id="preview">
+        <div class="section-header">
+            <h3>Live Table Preview: {{ preview_title }} <span style="font-weight: normal; font-size: 13px; color: #7f8c8d;">(Showing up to 25 most recent rows)</span></h3>
+            <a href="/api/analytics/export/table/{{ preview_table }}" class="btn-download">📥 Download {{ preview_table }}.csv</a>
+        </div>
+        <div class="preview-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        {% for col in preview_cols %}
+                        <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in preview_rows %}
+                    <tr>
+                        {% for val in row %}
+                        <td>{{ val }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="{{ preview_cols|length }}" style="text-align:center; padding:20px; color:#7f8c8d;">No records in this table.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script>

@@ -404,74 +404,359 @@ def telegram_webhook():
 # ANALYTICS & CSV EXPORT ROUTES
 # ==========================================
 import csv
-from io import StringIO
-from flask import Response
+import zipfile
+from io import StringIO, BytesIO
+from flask import Response, send_file
+from openpyxl import Workbook
+
+def _is_test_uhid(uhid_val):
+    u = str(uhid_val or "").strip()
+    sandbox_ids = {"00", "03", "10", "11", "12", "13", "14", "21", "22", "45", "123", "777", "6350", "67890"}
+    return u.lower().startswith("test") or u in sandbox_ids
+
+def _get_exportable_tables():
+    """Returns ordered metadata and row-fetcher callables for all 8 DB tables + denormalized fact sheet."""
+    def fetch_patients():
+        rows = Patient.query.order_by(Patient.created_at.desc()).all()
+        cols = ["uhid", "cohort", "name", "age", "gender", "preferred_language", "telegram_chat_id", "consent_status", "created_at"]
+        data = [
+            [
+                r.uhid,
+                "Sandbox_Test" if _is_test_uhid(r.uhid) else "Real_Hospital",
+                r.name,
+                r.age,
+                r.gender,
+                r.preferred_language,
+                r.telegram_chat_id or "",
+                r.consent_status,
+                r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else "",
+            ]
+            for r in rows
+        ]
+        return cols, data
+
+    def fetch_complaints():
+        rows = PatientComplaint.query.order_by(PatientComplaint.id.asc()).all()
+        cols = ["id", "uhid", "hpo_id", "hpo_term", "duration"]
+        data = [[r.id, r.uhid, r.hpo_id, r.hpo_term, r.duration] for r in rows]
+        return cols, data
+
+    def fetch_diagnoses():
+        rows = PatientDiagnosis.query.order_by(PatientDiagnosis.id.asc()).all()
+        cols = ["id", "uhid", "icd10_code", "icd10_term"]
+        data = [[r.id, r.uhid, r.icd10_code, r.icd10_term] for r in rows]
+        return cols, data
+
+    def fetch_medications():
+        rows = PatientMedication.query.order_by(PatientMedication.id.asc()).all()
+        cols = ["id", "uhid", "rxcui", "drug_name", "dose", "start_date", "end_date"]
+        data = [
+            [
+                r.id, r.uhid, r.rxcui, r.drug_name, r.dose,
+                r.start_date.isoformat() if r.start_date else "",
+                r.end_date.isoformat() if r.end_date else "",
+            ]
+            for r in rows
+        ]
+        return cols, data
+
+    def fetch_timings():
+        rows = MedicationTiming.query.order_by(MedicationTiming.id.asc()).all()
+        cols = ["id", "medication_id", "dosage_time"]
+        data = [[r.id, r.medication_id, r.dosage_time.strftime("%H:%M:%S") if r.dosage_time else ""] for r in rows]
+        return cols, data
+
+    def fetch_dosage_logs():
+        rows = DosageLog.query.order_by(DosageLog.scheduled_datetime.desc()).all()
+        cols = ["id", "timing_id", "scheduled_datetime", "status", "response_time", "created_at"]
+        data = [
+            [
+                r.id,
+                r.timing_id,
+                r.scheduled_datetime.strftime("%Y-%m-%d %H:%M:%S") if r.scheduled_datetime else "",
+                r.status,
+                r.response_time.strftime("%Y-%m-%d %H:%M:%S") if r.response_time else "",
+                r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else "",
+            ]
+            for r in rows
+        ]
+        return cols, data
+
+    def fetch_users():
+        rows = User.query.order_by(User.created_at.asc()).all()
+        cols = ["telegram_id", "first_name", "role", "status", "created_at"]
+        data = [[r.telegram_id, r.first_name, r.role, r.status, r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else ""] for r in rows]
+        return cols, data
+
+    def fetch_auth_tokens():
+        rows = AuthToken.query.order_by(AuthToken.created_at.desc()).all()
+        cols = ["token", "telegram_id", "status", "created_at"]
+        data = [[r.token, r.telegram_id or "", r.status, r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else ""] for r in rows]
+        return cols, data
+
+    def fetch_adherence_fact():
+        sql = text("""
+            SELECT
+                l.id AS log_id,
+                p.uhid,
+                p.name AS patient_name,
+                p.age,
+                p.gender,
+                p.preferred_language,
+                p.consent_status,
+                m.id AS medication_id,
+                m.rxcui,
+                m.drug_name,
+                m.dose,
+                m.start_date,
+                m.end_date,
+                t.id AS timing_id,
+                t.dosage_time,
+                l.scheduled_datetime,
+                l.status,
+                l.response_time,
+                TIMESTAMPDIFF(MINUTE, l.scheduled_datetime, l.response_time) AS latency_minutes
+            FROM dosage_logs l
+            JOIN medication_timings t ON l.timing_id = t.id
+            JOIN patient_medications m ON t.medication_id = m.id
+            JOIN patients p ON m.uhid = p.uhid
+            ORDER BY l.scheduled_datetime DESC
+        """)
+        res = db.session.execute(sql).fetchall()
+        cols = [
+            "log_id", "uhid", "cohort", "patient_name", "age", "gender", "preferred_language",
+            "consent_status", "medication_id", "rxcui", "drug_name", "dose", "start_date",
+            "end_date", "timing_id", "dosage_time", "scheduled_datetime", "status",
+            "response_time", "latency_minutes"
+        ]
+        data = []
+        for r in res:
+            cohort = "Sandbox_Test" if _is_test_uhid(r.uhid) else "Real_Hospital"
+            data.append([
+                r.log_id, r.uhid, cohort, r.patient_name, r.age, r.gender, r.preferred_language,
+                r.consent_status, r.medication_id, r.rxcui, r.drug_name, r.dose,
+                str(r.start_date) if r.start_date else "",
+                str(r.end_date) if r.end_date else "",
+                r.timing_id,
+                str(r.dosage_time) if r.dosage_time else "",
+                str(r.scheduled_datetime) if r.scheduled_datetime else "",
+                r.status,
+                str(r.response_time) if r.response_time else "",
+                r.latency_minutes if r.latency_minutes is not None else "",
+            ])
+        return cols, data
+
+    return {
+        "adherence_fact_table": ("Denormalized Adherence Fact Table (Joined)", fetch_adherence_fact),
+        "patients": ("Patients Master Table", fetch_patients),
+        "patient_complaints": ("Patient Complaints (HPO)", fetch_complaints),
+        "patient_diagnoses": ("Patient Diagnoses (ICD-10)", fetch_diagnoses),
+        "patient_medications": ("Patient Medications (RxNorm)", fetch_medications),
+        "medication_timings": ("Medication Timings", fetch_timings),
+        "dosage_logs": ("Dosage Logs", fetch_dosage_logs),
+        "users": ("System Users", fetch_users),
+        "auth_tokens": ("Auth Tokens", fetch_auth_tokens),
+    }
 
 @main_bp.route('/analytics')
 def analytics():
     if 'telegram_id' not in session:
         return redirect(url_for('main.login'))
-    from datetime import datetime, timedelta, timezone
-    IST = timezone(timedelta(hours=5, minutes=30))
-    # 1. Determine Date Range
-    time_range = request.args.get('range', '7days')
+
+    time_range = request.args.get('range', 'overall')
+    cohort_filter = request.args.get('cohort', 'all')
+    preview_table = request.args.get('table', 'patients')
     today = datetime.now(IST).date()
-    
-    if time_range == '1month':
-        days_back = 30
-        start_date = today - timedelta(days=days_back-1)
-    elif time_range == 'overall':
+
+    if time_range == '7days':
+        start_date = today - timedelta(days=6)
+    elif time_range == '1month':
+        start_date = today - timedelta(days=29)
+    else:
+        time_range = 'overall'
         first_log = DosageLog.query.order_by(DosageLog.scheduled_datetime.asc()).first()
         start_date = first_log.scheduled_datetime.date() if first_log else today
-    else:
-        days_back = 7
-        start_date = today - timedelta(days=days_back-1)
-        
-    delta_days = (today - start_date).days + 1
-    
-    # 2. Fetch all logs in the range efficiently
+
+    delta_days = max((today - start_date).days + 1, 1)
     start_dt = datetime.combine(start_date, datetime.min.time())
     end_dt = datetime.combine(today, datetime.max.time())
-    
-    logs_in_range = DosageLog.query.filter(DosageLog.scheduled_datetime >= start_dt, DosageLog.scheduled_datetime <= end_dt).all()
-    
-    # Group logs by date
+
+    # Join logs with patient UHID so cohort filtering works cleanly
+    joined_logs = (
+        db.session.query(DosageLog, Patient.uhid)
+        .join(MedicationTiming, DosageLog.timing_id == MedicationTiming.id)
+        .join(PatientMedication, MedicationTiming.medication_id == PatientMedication.id)
+        .join(Patient, PatientMedication.uhid == Patient.uhid)
+        .filter(DosageLog.scheduled_datetime >= start_dt, DosageLog.scheduled_datetime <= end_dt)
+        .all()
+    )
+
+    if cohort_filter == 'real':
+        filtered_logs = [log for log, uhid in joined_logs if not _is_test_uhid(uhid)]
+    elif cohort_filter == 'test':
+        filtered_logs = [log for log, uhid in joined_logs if _is_test_uhid(uhid)]
+    else:
+        cohort_filter = 'all'
+        filtered_logs = [log for log, _ in joined_logs]
+
     logs_by_date = {}
-    for log in logs_in_range:
+    for log in filtered_logs:
         l_date = log.scheduled_datetime.date()
-        if l_date not in logs_by_date:
-            logs_by_date[l_date] = []
-        logs_by_date[l_date].append(log)
-        
-    # 3. Generate Chart Data
+        logs_by_date.setdefault(l_date, []).append(log)
+
     labels = []
     adherence_data = []
-    
     for i in range(delta_days):
         current_date = start_date + timedelta(days=i)
         labels.append(current_date.strftime('%b %d'))
-        
         day_logs = logs_by_date.get(current_date, [])
         d_total = len(day_logs)
         d_taken = sum(1 for l in day_logs if l.status == 'Taken')
         d_rate = round((d_taken / d_total * 100), 2) if d_total > 0 else 0
         adherence_data.append(d_rate)
 
-    # 4. Calculate Summary Stats for the selected range
-    total_logs = len(logs_in_range)
-    taken_logs = sum(1 for l in logs_in_range if l.status == 'Taken')
-    adherence_rate = round((taken_logs / total_logs * 100), 2) if total_logs > 0 else 0
+    total_logs = len(filtered_logs)
+    taken_logs = sum(1 for l in filtered_logs if l.status == 'Taken')
+    missed_logs = sum(1 for l in filtered_logs if l.status == 'Missed')
+    pending_logs = sum(1 for l in filtered_logs if l.status == 'Pending')
+    actioned_logs = taken_logs + missed_logs
 
-    total_patients = Patient.query.count()
-    active_consents = Patient.query.filter_by(consent_status='Accepted').count()
+    adherence_rate = round((taken_logs / total_logs * 100), 2) if total_logs > 0 else 0
+    actioned_adherence_rate = round((taken_logs / actioned_logs * 100), 2) if actioned_logs > 0 else 0
+
+    all_patients = Patient.query.all()
+    if cohort_filter == 'real':
+        cohort_patients = [p for p in all_patients if not _is_test_uhid(p.uhid)]
+    elif cohort_filter == 'test':
+        cohort_patients = [p for p in all_patients if _is_test_uhid(p.uhid)]
+    else:
+        cohort_patients = all_patients
+
+    total_patients = len(cohort_patients)
+    active_consents = sum(1 for p in cohort_patients if p.consent_status == 'Accepted')
+
+    # Table catalog & live preview (top 25 rows)
+    export_registry = _get_exportable_tables()
+    if preview_table not in export_registry:
+        preview_table = 'patients'
+
+    table_cards = []
+    preview_cols, preview_rows, preview_title = [], [], ""
+    for key, (label, fetcher) in export_registry.items():
+        cols, rows = fetcher()
+        table_cards.append({
+            "key": key,
+            "label": label,
+            "row_count": len(rows),
+            "col_count": len(cols),
+        })
+        if key == preview_table:
+            preview_title = label
+            preview_cols = cols
+            preview_rows = rows[:25]
 
     return render_template(
-        'analytics.html', 
-        total_patients=total_patients, 
+        'analytics.html',
+        total_patients=total_patients,
         active_consents=active_consents,
         total_logs=total_logs,
+        taken_logs=taken_logs,
+        missed_logs=missed_logs,
+        pending_logs=pending_logs,
         adherence_rate=adherence_rate,
+        actioned_adherence_rate=actioned_adherence_rate,
         chart_labels=labels,
         chart_data=adherence_data,
-        current_range=time_range
+        current_range=time_range,
+        current_cohort=cohort_filter,
+        table_cards=table_cards,
+        preview_table=preview_table,
+        preview_title=preview_title,
+        preview_cols=preview_cols,
+        preview_rows=preview_rows,
+    )
+
+@main_bp.route('/api/analytics/export')
+def export_analytics_csv():
+    """Backward-compatible endpoint exporting the Patients master sheet."""
+    return export_single_table('patients')
+
+@main_bp.route('/api/analytics/export/table/<table_name>')
+def export_single_table(table_name):
+    if 'telegram_id' not in session:
+        return redirect(url_for('main.login'))
+    registry = _get_exportable_tables()
+    if table_name not in registry:
+        return jsonify({"error": f"Unknown table: {table_name}"}), 404
+
+    _, fetcher = registry[table_name]
+    cols, rows = fetcher()
+
+    si = StringIO()
+    si.write('\ufeff')  # UTF-8 BOM for clean Excel opening
+    writer = csv.writer(si)
+    writer.writerow(cols)
+    writer.writerows(rows)
+
+    stamp = datetime.now(IST).strftime('%Y%m%d_%H%M')
+    filename = f"dosetrack_{table_name}_{stamp}.csv"
+    return Response(
+        si.getvalue(),
+        mimetype="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+@main_bp.route('/api/analytics/export/all-xlsx')
+def export_all_tables_xlsx():
+    if 'telegram_id' not in session:
+        return redirect(url_for('main.login'))
+    registry = _get_exportable_tables()
+
+    wb = Workbook()
+    # Remove default sheet
+    wb.remove(wb.active)
+
+    for key, (_, fetcher) in registry.items():
+        cols, rows = fetcher()
+        ws = wb.create_sheet(title=key[:31])
+        ws.append(cols)
+        for r in rows:
+            ws.append(r)
+
+    bio = BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+
+    stamp = datetime.now(IST).strftime('%Y%m%d_%H%M')
+    return send_file(
+        bio,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=f"dosetrack_all_tables_{stamp}.xlsx"
+    )
+
+@main_bp.route('/api/analytics/export/all-zip')
+def export_all_tables_zip():
+    if 'telegram_id' not in session:
+        return redirect(url_for('main.login'))
+    registry = _get_exportable_tables()
+
+    bio = BytesIO()
+    with zipfile.ZipFile(bio, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for key, (_, fetcher) in registry.items():
+            cols, rows = fetcher()
+            si = StringIO()
+            si.write('\ufeff')
+            writer = csv.writer(si)
+            writer.writerow(cols)
+            writer.writerows(rows)
+            zf.writestr(f"{key}.csv", si.getvalue().encode("utf-8"))
+
+    bio.seek(0)
+    stamp = datetime.now(IST).strftime('%Y%m%d_%H%M')
+    return send_file(
+        bio,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"dosetrack_all_csv_sheets_{stamp}.zip"
     )
